@@ -20,13 +20,12 @@ import { UsersService } from '../services/users.service';
 import { AgeCastPipe } from '../pipes/age-cast/age-cast.pipe';
 
 @Controller('users')
-// @UseGuards()
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Get()
-  getAllUsers(@Res() res: Response) {
-    const users = this.userService.getUsers();
+  async getAllUsers(@Res() res: Response) {
+    const users = await this.userService.getUsers();
 
     res.json({
       success: true,
@@ -35,8 +34,8 @@ export class UsersController {
   }
 
   @Get(':id')
-  getUser(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
-    const user = this.userService.getUser(id);
+  async getUser(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    const user = await this.userService.getUser(id);
 
     res.json({
       success: true,
@@ -46,8 +45,11 @@ export class UsersController {
 
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  createUser(@Body(AgeCastPipe) userDto: CreateUserDto, @Res() res: Response) {
-    const user = this.userService.createUser(userDto);
+  async createUser(
+    @Body(AgeCastPipe) userDto: CreateUserDto,
+    @Res() res: Response,
+  ) {
+    const user = await this.userService.createUser(userDto);
 
     res.json({
       success: true,
@@ -56,12 +58,12 @@ export class UsersController {
   }
 
   @Patch(':id')
-  updateUser(
+  async updateUser(
     @Body(AgeCastPipe) userDto: UpdateUserDto,
     @Param('id', ParseIntPipe) id: number,
     @Res() res: Response,
   ) {
-    const user = this.userService.updateUser(userDto, id);
+    const user = await this.userService.updateUser(userDto, id);
 
     res.json({
       success: true,
@@ -70,9 +72,11 @@ export class UsersController {
   }
 
   @Delete(':id')
-  deleteUser(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
-    const status = this.userService.deleteUser(id);
-
+  async deleteUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
+    const status = await this.userService.deleteUser(id);
     if (status) {
       res.json({
         success: true,

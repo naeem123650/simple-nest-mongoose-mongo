@@ -1,58 +1,46 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UpdateUserDto } from '../dto/updateUser.dto';
 import { CreateUserDto } from '../dto/createUser.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from '../schemas/users.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class UsersService {
-  private users = [
-    {
-      id: 1,
-      username: 'naeemv',
-      email: 'naeemv@gmail.com',
-      password: 'naeem123',
-      age: 12,
-    },
-  ];
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  getUsers() {
-    return this.users;
+  async getUsers(): Promise<User[]> {
+    return this.userModel.find().exec();
   }
 
-  getUser(id: number) {
-    const userData = this.users.find((user) => user.id === id);
-
-    if (!userData) {
-      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+  async getUser(id: number) {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-    return userData;
+    return user;
   }
 
-  createUser(userDto: CreateUserDto) {
-    this.users.push({ id: this.users.length + 1, ...userDto });
-    return userDto;
+  async createUser(userDto: CreateUserDto): Promise<User> {
+    const user = new this.userModel(userDto);
+    return user.save();
   }
 
-  updateUser(userDto: UpdateUserDto, id: number) {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-
-    if (userIndex === -1) {
-      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+  async updateUser(userDto: UpdateUserDto, id: number) {
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(id, userDto, { new: true })
+      .exec();
+    if (!updatedUser) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-
-    this.users[userIndex] = { ...this.users[userIndex], ...userDto };
-
-    return this.users[userIndex];
+    return updatedUser;
   }
 
-  deleteUser(id: number) {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-
-    if (userIndex === -1) {
-      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+  async deleteUser(id: number) {
+    const result = await this.userModel.findByIdAndDelete(id).exec();
+    if (!result) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-
-    this.users = this.users.splice(userIndex, 1);
-
     return true;
   }
 }
